@@ -1,0 +1,321 @@
+\documentclass{jasse}% Initial setting is in jasse.cls
+%
+%%%%%%%%%%%%%%%%%%%
+% Article information
+%%%%%%%%%%%%%%%%%%%
+\Year{2024}
+\Vol{xx}
+\No{x}
+\Pages{xx--xx}
+\Received{xx}
+\Accepted{xx}
+\Published{xx}
+%
+%%%%%%%%%%%%%%%%%%%
+% If you use another package or new command,
+% please add as below.
+%%%%%%%%%%%%%%%%%%%
+%\usepackage{color}
+%\usepackage{hyperref}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{svg}
+\usepackage{wrapfig}
+%%%%%%%%%%%%%%%%%%%
+%
+%
+%%%%%%%%%%%%%%%%%%%
+% Title is here.
+%%%%%%%%%%%%%%%%%%%
+\title{Temporal fluid simulation of plasma particle and energy confinement in GAMMA 10/PDX pellet injection experiments}
+
+%%%%%%%%%%%%%%%%%%%
+% Author is listed below.
+%%%%%%%%%%%%%%%%%%%
+\author[1,*]{Akihiro Kunii}% Corresponding author should add * mark.
+\author[1]{Satoshi Togo}
+\author[1]{Masayuki Yoshikawa}
+\author[1]{Naomichi Ezumi}
+\author[1]{Yousuke Nakashima}
+\author[1]{Mizuki Sakamoto}
+
+%%%%%%%%%%%%%%%%%%%
+% Affiliation
+%%%%%%%%%%%%%%%%%%%
+\affil[1]{{Plasma Research Center, University of Tsukuba, Tsukuba 305-8577, Japan}}
+
+%%%%%%%%%%%%%%%%%%%
+% Date must be empty.
+%%%%%%%%%%%%%%%%%%%
+%\dates{\today}
+
+%%%%%%%%%%%%%%%%%%%
+% Put email address
+%%%%%%%%%%%%%%%%%%%
+\email{kunii\_akihiro@prc.tsukuba.ac.jp}% Corresponding author's address
+\begin{document}
+\maketitle
+\thispagestyle{titlepage}
+
+%%%%%%%%%%%%%%%%%%%
+% Abstract
+%%%%%%%%%%%%%%%%%%%
+\begin{abstract}
+    The pellet injection experiment [M. Yoshikawa et al., J. Plasma Phys., 90 (2024), 905900208] in the tandem mirror device GAMMA 10/PDX is simulated with the plasma fluid model based on an anisotropic ion pressure (AIP model) [S. Togo et al., J. Adv. Simulat. Sci. Eng., 9 (2022), 185]. A neutral gas shielding (NGS) model [Y. Nakamura et al., Nucl. Fusion, 26 (1986), 907] is implemented to model the pellet ablation rate. It is suggested that the energy loss due to charge exchange reactions promoted the axial particle loss from the main confinement region, the central cell. It is also found that the axial particle loss and energy loss due to charge exchange reactions are the main contributors to the reduction in the stored energy in the central cell.
+
+    % outcomeに動機を得てforce balanceを解析した理由を一文で述べる
+    
+    It is also found that the particle flux at the edge of the central cell is determined by the forces in the direction of loss (gradient of parallel ion pressure and electric field force), and the force in the direction of confinement (mirror force). In addition, it is shown that the mirror force was decreased more than the other two forces as a result of the energy loss caused by the charge exchange reaction and this enhanced the particle loss from the central cell.
+\end{abstract}
+
+%%%%%%%%%%%%%%%%%%%
+% Keywords
+%%%%%%%%%%%%%%%%%%%
+\begin{keywords}
+    time-evolving fluid simulation, axial particle flux, neutral gas shielding (NGS) model, anisotropic ion pressure, mirror force
+\end{keywords}
+
+%%%%%%%%%%%%%%%%%%%
+% Start main body
+%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+    Handling enormous particle and heat loads toward the divertor plates is one of the most crucial issues in building a fusion reactor. To resolve this issue, forming a detached plasma has been considered \cite{leonard18,ohno17}. In particular, understanding the dynamic interaction between high-density particle fluxes brought about by edge localized modes (ELMs) and detached plasmas is drawing substantial interest \cite{ohno17,loarte07}. In a tandem mirror device GAMMA 10/PDX, pellet-plasma interactions have been investigated in the main confinement region, the central cell \cite{kubota07,yoshikawa22,yoshikawa24}. Divertor-simulation experiments have also been performed in the end cell \cite{nakashima17,ezumi19}. Recently, research on the dynamic behavior of detached plasmas was conducted by generating high-density axial particle fluxes by pellet injection and introducing them into the end cell. To understand the dynamic behavior of detached plasmas at the end cell, it is essential to know the transport mechanisms of the high-density particle flux from the central cell to the end cell caused by pellet ablation. However, details have not been numerically studied well. We simulate a pellet injection experiment in GAMMA 10/PDX and investigate time evolution of particle number and plasma energy in the central cell. We use the AIP model \cite{togo22,togo19}, a one-dimensional time-evolving plasma fluid simulation code based on the anisotropic ion pressure, to simulate time evolution of a GAMMA 10/PDX plasma. We adopt a neutral gas shielding (NGS) model \cite{nakamura86} that gives the pellet ablation rate to the AIP model. This model was also used in the analysis of pellet injection experiments on GAMMA 10 \cite{kubota07}.
+    In this paper, 
+    % 本論文では、section2でシミュレーションの設定、3で溶発終了時のプラズマ分布とセントラル部における物理量の時間変化、4でフォースバランスの観点から粒子束形成過程の解析を議論する。
+
+\section{Simulation setup}
+    % (修正)実際のペレット入射実験で生じている軸方向、径方向への移動に対する考え方の部分がいまいち。
+    GAMMA 10/PDX, as shown in Fig. \ref{fig_G10}, is a tandem mirror device 27 $m$ in length. It consists of a central cell, two minimum-B anchor cells, two plug and barrier cells, and two end cells. The s-axis is parallel to $B$-field. The mid-plane is $s$ = 0 $m$. In the central cell, pellet injection experiments were conducted.
+    The pellets were injected vertically upward from the downside port at $s$ = -0.10 m. The injection speed was set to 600 m/s, and we assume that the velocity of the pellet is constant. As the plasma diameter at  $s$ = -0.10 m is about 36 cm, we set the time it remains in the plasma to 0.6 ms. \textbf{For ease of calculation, we ignore the effect of movement for radial direction and set the region of particle source and energy source from the pellet.}
+
+    % figure のガビガビ感直す、ペレットの入射位置を明示する。
+    \begin{figure}
+        \centering
+        \includesvg[width=\linewidth]{graphs/fig_G10.svg}
+        \caption{Schematic of the GAMMA 10/PDX tandem mirror with the position of the pellet injection port.} \label{fig_G10}
+    \end{figure}
+
+    The variables, steady-state source terms, and the simulated region are the same as Sec. 2 of Ref. \cite{togo22}. We use the plasma profiles in the $Q_{\rm{i\bot}} / Q_{\rm{i}} = 1$ case that considers ion heating only in the perpendicular direction in Ref. \cite{togo22} as the initial condition.
+    \textbf{In addition, in this study, we do not consider the plasma transport in the radial direction.} We set spatial and temporal grid at $\Delta s$ = 0.01 m and $\Delta t$ = 1.0$\times 10^{-8}$ s.
+    An NGS model is implemented in the AIP model to calculate the pellet ablation rate. The recession speed of the pellet radius that is used for the calculation of the ablation rate is formulated as follows \cite{nakamura86}; 
+\begin{equation}
+    r'_{\rm{p}} = 4.55 \times 10^{6} n^{\rm{-1}}_{\rm{p}}m^{-\frac{1}{3}}_{\rm{i}}
+    \left(\sqrt{\frac{e}{\pi m_{\rm{i}}}}n_{\rm{i}} \right)^{\frac{1}{3}}E^{0.9}_{\rm{i}}
+    r^{-\frac{2}{3}}_{\rm{p}},
+\end{equation}
+    where $n_{\rm{p}}$, $m_{\rm{i}}$, $n_{\rm{i}}$, $E_{\rm{i}}$, and $r_{\rm{p}}$ represent the atomic number density of hydrogen pellet, ion mass, ion density and energy of the background plasma, and pellet radius, respectively. The ion energy is defined by $E_{\rm{i}} \equiv \frac{1}{2}T_{\rm{i\parallel}} + T_{\rm{i\bot}}$ (eV), where $T_{\rm{i\parallel}}$ and $T_{\rm{i\bot}}$ denote the parallel and perpendicular ion temperature. For ease of calculation, we set the following three assumptions. First, the ablation cloud volume $V_{\rm{cld}}$ is constant and is given by $V_{\rm{cld}} = 2r_{\rm{cld}}A$, where $r_{\rm{cld}}$ and $A$ represent the ablation cloud radius and the cross-sectional area of the flux tube, respectively. We fix $r_{\rm{cld}} = 8.0$ cm to reproduce the order of the ablation cloud radius observed as $\rm{H}_{\alpha}$ emissions in the experiment \cite{yoshikawa24}. Second, the ionization rate in the ablation cloud $S_{\rm{iz}}$ is distributed uniformly. Third, the ablation and the integrated ionization rates in the ablation cloud are the same. Following these assumptions, we model $S_{\rm{iz}}$ as follows;
+\begin{equation}
+    S_{\rm{iz}} =  n_{\rm{p}}\frac{4\pi\cdot r^{\rm{2}}_{\rm{p}}\cdot r'_{\rm{p}}}{V_{\rm{cld}}}. 
+\end{equation}
+    We set the initial pellet radius $r_{\rm{p0}}$ = 0.54 mm to reproduce the realistic pellet volume in the experiment \cite{yoshikawa24}. In addition, the position of the pellet is fixed at $s = -0.10$ m during ablation. We consider charge exchange reactions (cx) and ionization/excitation reactions (iz) as the atomic processes in the ablation cloud. We model the amount of energy loss due to these reactions as follows;
+\begin{equation}
+    Q_{\rm{cx\bot}} = -T_{\rm{i\bot}}\frac{{\left\langle \sigma v\right\rangle}_{\rm{cx}}}
+    {{\left\langle \sigma v\right\rangle}_{\rm{iz}}}S_{\rm{iz}},
+    Q_{\rm{cx\parallel}} = -\frac{1}{2}T_{\rm{i\parallel}}\frac{{\left\langle \sigma v\right\rangle}_{\rm{cx}}}
+    {{\left\langle \sigma v\right\rangle}_{\rm{iz}}}S_{\rm{iz}},
+\end{equation}
+\begin{equation}
+    Q_{\rm{iz}} = -\varepsilon_{\rm{iz}}S_{\rm{iz}}.
+\end{equation}
+    Note that $Q_{\rm{cx\parallel}}, Q_{\rm{cx\bot}}, Q_{\rm{iz}}$ denote the parallel and perpendicular power loss densities from ion due to cx and that from electron due to iz, respectively. The rate coefficients of cx and iz are denoted by ${\left\langle \sigma v\right\rangle}_{\rm{cx}}(T_{\rm{i}})$ and ${\left\langle \sigma v\right\rangle}_{\rm{iz}}(T_{\rm{e}})$, respectively, and shown in Fig. \ref{fig_rate_coef}. The effective isotropic ion temperature is defined by $T_{\rm{i}} \equiv (T_{\rm{i\parallel}}+2T_{\rm{i\bot}})/3$. In addition, $\varepsilon_{\rm{iz}}$ represents the total energy loss due to ionization and excitation reactions, and we set it to 30 eV. 
+
+\begin{figure}
+    \centering
+    \includesvg{graphs/fig_rate_coef.svg}
+    \caption{Rate coefficients of the charge exchange reaction (solid line) and ionization/excitation reaction (broken line).} \label{fig_rate_coef}
+\end{figure}
+
+    We start the calculation at the time of pellet injection and keep the pellet ablation calculation for 0.60 ms. 
+    % これは実際の実験でペレットがプラズマ中に存在する時間と同等である。(600 m/sをどう対処したかの説明を再びするのはタブーなので、前述した通り～ぐらいでとどめておく）
+    After ablation, we remove the pellet from the plasma and continue the calculation until the plasma returns to the original steady state. To investigate the effects of the atomic processes, we calculate four cases: (cx$_{\rm{off}}$, iz$_{\rm{off}}$), (cx$_{\rm{off}}$, iz$_{\rm{on}}$), (cx$_{\rm{on}}$, iz$_{\rm{off}}$), (cx$_{\rm{on}}$, iz$_{\rm{on}}$). Here, "on" means that the energy loss due to each reaction was considered, and "off" means that it was not.
+
+\section{Simulation Results}
+\subsection{Profiles of density and temperature when ablation ends}
+Figure \ref{fig_dist_val} shows $B$, $n$, $V$, $T_{\rm{e}}$, $T_{\rm{i\bot}}$, and $T_{\rm{i\parallel}}$ distributions at the end of the ablation duration ($t$ = 0.60 ms). Note that all physical quantities shown here are almost symmetric concerning $s$ = 0 m, and distributions for $s \geq 0$ are only shown. The behaviors of $n$, $T_{\rm{e}}$, $T_{\rm{i\bot}}$, and $T_{\rm{i\parallel}}$ are affected by the presence or absence of $Q_{\rm{cx\bot}}$ and $Q_{\rm{cx\parallel}}$, and the effect of $Q_{\rm{iz}}$ is found to be small. Since ${\left\langle \sigma v\right\rangle}_{\rm{cx}} = 3 \sim 5 \times 10^{-14} \rm{m}^{\rm{3}}/\rm{s}$ and ${\left\langle \sigma v\right\rangle}_{\rm{iz}} = 1 \sim 3 \times 10^{-14} \rm{m}^{\rm{3}}/\rm{s}$ during ablation, $Q_{\rm{cx}} \equiv (Q_{\rm{cx\parallel}}+Q_{\rm{cx\bot}})$ is only a few times larger than $Q_{\rm{iz}}$. Therefore, the difference in the magnitude of $Q_{\rm{cx}}$ and $Q_{\rm{iz}}$ is insufficient to explain why the effect of $Q_{\rm{cx}}$ is dominant in the $n$, $T_{\rm{e}}$, $T_{\rm{i\bot}}$, and $T_{\rm{i\parallel}}$ distributions.
+% (追加)この結果に対するアプローチをどうするか。節の終わりを「説明できない。」で締めるのは論文的ではない。
+% たぶん荷電交換反応による吸熱モデルがizに比べて温度変化、密度変化に大きく寄与することを説明することになると思うので、Sect 4.3がそれに適しているはず=>そうなると4.3にペレットの溶発率の時間変化の説明も必要になる？
+
+\begin{figure}[t]
+    \centering
+    \includesvg{graphs/fig_dist_val.svg}
+    \caption{On-axis profiles of (a) the magnetic field strength $B$, (b) the plasma density $n$, 
+    (c), the ion flow speed $V$, (d) the perpendicular ion temperature $T_{\rm{i\bot}}$, (e) the parallel ion temperature $T_{\rm{i\parallel}}$, and (f) the electron temperature $T_{\rm{e}}$ at the end of the ablation ($t$ = 0.6 ms). 
+    The vertical chain lines represent the position of the 
+    edge of the central cell ($s$ = 2.8 m) and the black solid lines represent 
+    each variable's initial and steady-state distribution.} \label{fig_dist_val}
+\end{figure}
+
+\subsection{Time evolution of stored energy and stored particle number in the central cell}
+Figure \ref{fig_time_evol_E_num} shows the time evolution of the stored ion number in the central cell, cross-sectional-area-integrated particle flux at the edge of the central cell ($s$ = 2.8 m), and stored plasma energy in the central cell. When $Q_{\rm{cx\parallel}}$ and $Q_{\rm{cx\bot}}$ are considered, the increase in the stored ion number in the central cell during ablation is suppressed, as shown in Fig. \ref{fig_time_evol_E_num} (a). An increase in the particle flux caused this suppression. The presence or absence of $Q_{\rm{cx\parallel}}$ and $Q_{\rm{cx\bot}}$ changes the behavior of cross-sectional-area-integrated particle flux. This change can be caused by changes in the force balance owing to the significant reduction in $T_{\rm{i}}$ due to $Q_{\rm{cx}}$, as already shown in Fig. \ref{fig_dist_val}. We will discuss the mechanisms of particle-flux formation from the point of view of the force balance that ion fluid feels in Sec. \ref{analyze}. During the recovery process ($t$ = 0.6 $\sim$ 10 ms), the stored ion number shows recovery behaviors after falling below the steady state value in all cases. A similar behavior is also observed in the line-integrated density in the central cell in the experiment \cite{yoshikawa24}. In addition, the timescale of changes due to pellet ablation is similar to that in the experiment \cite{yoshikawa24}. Therefore, this result qualitatively reproduces the experimental observation.
+
+A decrease in stored energy is observed even when the energy loss from the atomic processes is not considered, as shown in Fig. \ref{fig_time_evol_E_num} (c). 
+% AIP modelは現状で径方向輸送を考えていないだけなのでそのニュアンスを追加する。
+% 径方向輸送を考えていない・粒子損失を考慮していないことを明示しなければ自明ではないはず。なので、そのニュアンスを強調するためにあえてこの文言を入れた。が、消すかどうかは考えよう。
+Because AIP model does not consider the radial particle loss, this result indicates that the particle source from the pellet enhanced axial particle loss from the central cell. Furthermore, the effect of energy loss due to the ionization/excitation reaction on stored energy reduction was small. These results indicate that the axial particle loss from the central cell and energy loss caused by the charge exchange reactions were the main contributors affecting the stored energy reduction in the central cell.
+
+\begin{figure}
+    \centering
+    \includesvg{graphs/fig_time_evol_E_num.svg}
+    \caption{Time evolutions of (a) the stored ion number 
+    (b) cross-sectional-area-integrated particle flux at the edge of the central cell, and (c)  stored energy in the central cell. 
+    The vertical dashed lines represent the time when the ablation ended 
+    ($t$ = 0.6 ms), and the horizontal dashed lines represent 
+    the steady-state values. The cross-sectional-area-integrated particle flux are moving-averaged over 0.1 ms.} \label{fig_time_evol_E_num}
+\end{figure}
+
+\section{Particle flux analysis based on force balance} \label{analyze}
+\subsection{The derivation of the force balance equation}
+In order to understand why the suppression of total particle number at the central cell was caused when $Q_{\rm{cx}\parallel}$ and $Q_{\rm{cx}\bot}$ were taken into account, we analyzed the cross-sectional-area-integrated particle flux from the viewpoint of force balance that ion fluid felt. By combining the equation of continuity of ion and parallel momentum of plasma in the AIP model, we got the following equation for analysis of the particle flux;
+
+\small
+\begin{align}
+    nV(s) = nV(s_{\rm{a}}) + \int_{s_{\rm{a}}}^{s} \left[\frac{1}{m_{\rm{i}}V}\left(-\nabla_{\parallel} p_{\rm{i}\parallel} -\nabla_{\parallel} p_{\rm{e}} +\frac{p_{\rm{i}\parallel}-p_{\rm{i}\bot}}{B}\nabla_{\parallel} B \right) - \left(S - \frac{d n}{d t}\right) -\frac{1}{V}\frac{\partial (nV)}{\partial t} \right] d\zeta.\label{eq.f_balance}
+\end{align}
+\normalsize
+% スタグネーションポイントとsaを分けて記述した理由としては、それぞれの由来が異なるためとおもっていたが、よく考えてみたらスタグネーションポイントはどこから来たんだっけ？流速の分かれ目になる点で数値誤差を防ぐためのs_aとは区別しなきゃいけないとおもったはず。
+The integrand is the forces that ion fluid feels. From the left, the contents are the gradient of parallel ion pressure($\nabla_{\parallel} p_{\rm{i}\parallel}$), electric field force ($\nabla_{\parallel} p_{\rm{e}}$), mirror force ($\frac{p_{\rm{i}\parallel}-p_{\rm{i}\bot}}{B}\nabla_{\parallel} B$), source drag force $\left(S - \frac{d n}{d t}\right)$, and term resulting from the transformation of the equation $\left(\frac{1}{V}\frac{\partial (nV)}{\partial t}\right)$. Therefore, this equation means that the particle flux at the arbitrary point is the sum of the particle flux at the stagnation point ($s = s_{\rm{s}}$) and the integral of the forces that the ion fluid feels. In this paper, we introduced arbitrary point $s = s_{\rm{a}}$ to avoid the numerical divergence in the low-velocity region. We set $s_{\rm{a}} = 2.0$ m.
+In this section, as the effect of $Q_{\rm{iz}}$ on forming the particle flux was small, we applied this equation to the following two cases: (cx$_{\rm{off}}$, iz$_{\rm{off}}$), (cx$_{\rm{on}}$, iz$_{\rm{off}}$). 
+
+\subsection{Forces having a significant effect on forming particle flux}
+Figure \ref{fig_dist_particle_flux} shows the spatial profiles of the particle flux made by each force component in eq.(\ref{eq.f_balance}) when the ablation ended ($t = 0.6$ ms). From the top left, figure (a) $\sim$ (f) shows spatial profiles of the particle flux due to (a) gradient of parallel ion pressure ($-\nabla_{\parallel} p_{\rm{i}\parallel}$), (b) electric field force ($-\nabla_{\parallel} p_{\rm{e}}$), (c) mirror force ($\frac{p_{\rm{i}\parallel}-p_{\rm{i}\bot}}{B}\nabla_{\parallel} B$), (d) particle source $\left(S - \frac{d n}{d t}\right)$, (e) term resulting from the transformation of the equation, and (f) sum of all components.
+By comparing the absolute value of each component, particle fluxes due to the gradient of parallel ion pressure, electric field, and mirror force were two orders of magnitude larger than those of the other components. Therefore, those three forces had dominant effects on forming the particle flux. In addition, the gradient of parallel ion pressure and electric field force were in the direction of ion fluid loss from the central cell. In contrast, the mirror force was in the direction of ion fluid confinement. Therefore, the particle flux formation is determined by the competition between forces in the loss direction (gradient of parallel ion pressure and electric field force) and in the confinement direction (mirror force). Also, when $Q_{\rm{cx\parallel}}$ and $Q_{\rm{cx\bot}}$ were considered, three forces significantly affect the particle flux forming decreased those absolute values. 
+\begin{figure}[t]
+    \centering
+    \includesvg{graphs/fig_dist_particle_flux.svg}
+    \caption{Spatial distribution of the particle flux (2 $\leq s \leq $2.8 m) due to (a) gradient of parallel ion pressure, (b) electric field force, (c) mirror force, (d) source drag force, (e) term resulting from the transformation of the equation, and (f) sum of all components when the ablation ended ($t$ = 0.6 ms). Positive value indicates the particle flux is in the direction of ion fluid loss, while negative value indicates it is in the direction of ion fluid confinement.} \label{fig_dist_particle_flux}
+\end{figure}
+
+\subsection{Time evolution of force ratio}
+To understand the cause of particle number suppression in the central cell when considering $Q_{\rm{cx\parallel}}$ and $Q_{\rm{cx\bot}}$, we calculated the ratio of the particle flux due to force in the loss direction to that due to force in the accumulation direction. We call this ratio "force ratio". The definition of force ratio is as follows; 
+\begin{equation}
+    \rm{force~ratio} = \frac{\rm{loss~direction}}{\rm{confinement~direction}}  = \frac{\left\lvert \varGamma _{\rm{\nabla p_{i}}} + \varGamma _{\rm{\nabla p_{e}}}\right\rvert}{\left\lvert \varGamma _{\rm{mirr}}\right\rvert}.
+\end{equation}
+When the ratio becomes more significant than 1, the total forces that ion fluid feels become in the loss direction, and when the ratio becomes smaller than 1, the total forces become in the confinement direction.
+
+\begin{figure}[t]
+    \centering
+    \includesvg{graphs/fig_time_evol_force_ratio.svg}
+    \caption{Time evolution of the force ratio at the edge of the central cell ($s$ = 2.8 m). The vertical dashed lines represent the time when the ablation ended ($t$ = 0.6 ms), and the horizontal dashed lines represent the steady-state values. The results are moving-averaged over 0.1 ms.} \label{fig_time_evol_force_ratio}
+\end{figure}
+
+Figure \ref{fig_time_evol_force_ratio} shows the time evolution of the force ratio at the edge of the central cell ($s$ = 2.8 m). During the ablation (0 $\leq t \leq$ 0.6 ms), the case with $Q_{\rm{cx}\parallel}$ and $Q_{\rm{cx}\bot}$ showed a more significant value than the case without them. Therefore, energy loss due to charge exchange promoted the ion fluid loss from the central cell. When $Q_{\rm{cx}\parallel}$ and $Q_{\rm{cx}\bot}$ were considered, the absolute value of the particle flux of each component was decreased, as shown in Fig \ref{fig_dist_particle_flux}. Therefore, due to the $Q_{\rm{cx}\parallel}$ and $Q_{\rm{cx}\bot}$, the mirror force significantly reduced its absolute value more than the other two forces. 
+
+\begin{figure}
+    \centering
+    \includesvg{graphs/fig_dist_anisotropy.svg}
+    \caption{Spatial distribution of anisotropy of ion temperature (s = 0 $\sim$ 2.8 m). The black solid line shows the value in the steady state.} \label{fig_dist_anisotropy}
+\end{figure}
+
+Figure \ref{fig_dist_anisotropy} shows the spatial distribution of ion temperature anisotropy in the central cell. It was demonstrated that the ion temperature anisotropy decreased more when $Q_{\rm{cx}\parallel}$ and $Q_{\rm{cx}\bot}$ were considered. When the energy loss due to the charge exchange is considered, $-\frac{1}{2}T_{\rm{i\parallel}}\frac{{\left\langle \sigma v\right\rangle}_{\rm{cx}}}{{\left\langle \sigma v\right\rangle}_{\rm{iz}}}S_{\rm{iz}}$ is lost from the parallel component of ion energy, and $-T_{\rm{i\bot}}\frac{{\left\langle \sigma v\right\rangle}_{\rm{cx}}}{{\left\langle \sigma v\right\rangle}_{\rm{iz}}}S_{\rm{iz}}$ is lost from the perpendicular one. The initial value of the perpendicular ion temperature was more significant than the one in the parallel direction. Therefore, the energy loss from the perpendicular component of the ion temperature was more significant than the parallel components. Consequently, the ion temperature exhibited a more isotropic distribution when $Q_{\rm{cx}\parallel}$ and $Q_{\rm{cx}\bot}$ were considered. 
+
+Based on the results explained above, we now discuss the mechanism that caused the massive reduction of mirror force compared to the other two forces. The gradient of parallel ion pressure ($\nabla p_{\mathrm{i}\parallel}$) and electric field force ($\nabla p_{\mathrm{e}}$) are written down as follows;
+\begin{equation}
+    \nabla_{\parallel} p_{\mathrm{\sigma}} = n \nabla_{\parallel} T_{\mathrm{\sigma}} + T_{\mathrm{\sigma}} \nabla _{\parallel}n , (\sigma \in \left\{ \mathrm{i}\parallel, \mathrm{e}\right\}).
+\end{equation}
+
+The changes in the distributions of the physical quantities $n$, $T_{\rm{i}\parallel}$, and $T_{\rm{e}}$ due to the presence or absence of $Q_{\rm{i}\parallel}$ and $Q_{\rm{i}\bot}$ were the changes in the absolute values, with little change in the gradients, as already shown in Fig \ref{fig_dist_val}. Therefore, the decrease in these two particle fluxes was primarily due to the suppression of density increase and the increased reduction in the parallel direction ion temperature and electron temperature. On the other hand, the mirror force can be expressed in terms of ion temperature anisotropy as follows.
+
+\begin{align}
+    \frac{p_{\mathrm{i}\parallel}-p_{\mathrm{i}\bot}}{B} \nabla_{\parallel} B &= n\frac{T_{\mathrm{i}\parallel}-T_{\mathrm{i}\bot}}{B} \nabla_{\parallel} B, \\
+    &= nT_{\rm{i}\parallel}\frac{1-\frac{T_{\rm{i}\bot}}{T_{\rm{i}\parallel}}}{B}\nabla_{\parallel} B.\label{eq.mirror}
+\end{align}
+
+From eq.(\ref{eq.mirror}), the magnitude of the mirror force is determined by changes in the absolute values of physical quantities $n$ and $T_{\rm{i}\parallel}$, as well as changes in the anisotropy of ion temperature $\frac{T_{\rm{i}\bot}}{T_{\rm{i}\parallel}}$. The absolute changes in $n$ and $T_{\rm{i}\parallel}$ shown in Fig \ref{fig_dist_val}, and the changes in anisotropy shown in Fig \ref{fig_dist_anisotropy}, were both significantly influenced by $Q_{\rm{i}\parallel}$ and $Q_{\rm{i}\bot}$. In other words, in addition to the changes in density and temperature, which contributed to the damping of the parallel ion pressure gradient and the electric field force, the changes in the anisotropy of ion temperature also significantly impacted on the damping of the mirror force. As a result, the mirror force underwent a more considerable attenuation compared to the other two forces.
+
+\section{Conclusion}
+The pellet injection experiment in the tandem mirror device GAMMA 10/PDX is simulated with the plasma fluid model based on the anisotropic ion pressure (AIP model). In order to simulate the pellet ablation, the NGS model is adapted to the AIP model, and a simple pellet ablation modeling is used. Regarding the particle source from the pellet, the following assumptions are set: (i) the pellet ablation cloud is fixed, (ii) the ionization rate in the ablation cloud was distributed uniformly, and (iii) the ablation and the integrated ionization rates in the ablation cloud are the same. To investigate the effects of the atomic processes inside the ablation cloud, charge exchange and ionization/excitation reactions are considered. 
+
+The spatial distribution of ion density and temperature when the ablation ended showed significant effects of energy loss due to the charge exchange reaction. The distribution of density in the central cell showed suppression of increase, and temperature showed a more significant decrease than the case was not considered the energy loss due to charge exchange. It was suggested that energy loss due to charge exchange reactions promoted the axial particle loss from the central cell. It was also found that the axial particle loss and energy loss due to charge exchange reactions were the main contributors to the reduction in the stored energy in the central cell. 
+ 
+In order to understand the mechanism that energy loss due to charge exchange reaction promoted the particle loss from the central cell, particle flux analysis based on the force balance applied to the ion fluid was done. It was found that the particle flux was significantly affected by the three forces: gradient of parallel ion pressure, electric field force, and the mirror force. The gradient of parallel ion pressure and electric field force had the direction that lost ion fluid from the central cell; on the other hand, mirror force had the direction that confined the ion fluid in the central cell. Therefore, the particle flux at the edge of the central cell was determined by the competition between the forces in the direction of loss and the force in the direction of confinement. During the ablation, the ratio between loss and forces in the direction of confinement shifted the direction that lost ion fluid from the central cell. When considering the energy absorption due to charge exchange reactions, the absolute values of the parallel ion pressure gradient, electric field force, and mirror force all decrease. However, the reduction in the mirror force is significantly more significant than the other two forces. The decrease in the forces acting in the loss direction (the parallel ion pressure gradient and electric field force) is mainly driven by changes in the absolute values of plasma density and temperature. In contrast, the mirror force is additionally affected by changes in the anisotropy of the ion temperature. Therefore, the mirror force is subject to more influencing factors than the other two forces, resulting in a more substantial reduction, which causes the force balance to shift toward the loss direction.
+
+As our future works, the following things are planned: (i) implementation of the first flight collected diffusion (FFCD) model into the AIP model for neutral particles \cite{prinja92}, and (ii) quantitative reproduction of the experimental results of ion temperature in GAMMA 10/PDX.
+
+%%%%%%%%%%%%%%%%%%%
+% Acknowledgement
+%%%%%%%%%%%%%%%%%%%
+\acknowledgement
+The authors are grateful to Prof. T. Takizuka of Osaka University and the GAMMA 10/PDX group (PRC) for a fruitful discussion. This work was partly supported by JSPS KAKENHI Grant Number JP22K14022.
+
+\begin{thebibliography}{99}
+
+    \bibitem{leonard18}
+    A.W. Leonard:
+    \newblock Plasma detachment in divertor tokamaks,
+    \newblock {\em Plasma Phys.\ Control.\ Fusion},
+    60 (2018), 044001.
+
+    \bibitem{ohno17}
+    N.Ohno:
+    \newblock Plasma detachment in linear devices,
+    \newblock {\em Plasma Physics and Controlled Fusion},
+    59 (2017), 034007.
+
+    \bibitem{loarte07}
+    A. Loarte, B. Lipschultz, A.S. Kukushkin, G.F. Matthews, P.C. Stangeby, N. Asakura, G.F. Counsell, G. Federici, A. Kallenbach, K. Krieger \textit{et al}.,:
+    \newblock Chapter 4: Power and particle control,
+    \newblock {\em Nuclear\ Fusion},
+    47 (2007), S203
+
+    \bibitem{kubota07}
+    Y. Kubota, M. Yoshikawa, Y. Nakashima, T. Kobayashi, Y Higashizono, K. Matama, M. Noto, T. Cho:
+    \newblock Behavior of Hydrogen Fueled by Pellet Injection in the GAMMA 10 Tandem Mirror,
+    \newblock Plasma Fusion Research, 
+    2 (2007), S1057.
+
+    \bibitem{yoshikawa22}
+    M. Yoshikawa, Y. Nakashima, J. Kohagura, Y. Shima, H. Nakanishi, Y. Takeda, S. Kobayashi, R. Minami, N. Ezumi, M. Sakamoto:
+    \newblock First Observation of Pellet Ablation Clouds Using Two-Directional Simultaneous Photography in GAMMA 10/PDX,
+    \newblock Plamsa Fusion Research, 
+    17 (2022), 1202093.
+
+    \bibitem{yoshikawa24}
+    M. Yoshikawa, Y. Nakashima, J. Kohagura, Y. Shima, S. Kobayashi, R. Minami, N. Ezumi, M. Sakamoto:
+    \newblock Study of the pellet ablation cloud using the tomography technique for two-directional simultaneous photography in GAMMA 10/PDX,
+    \newblock Plamsa Fusion Research, 
+    90 (2024), 905900208.
+
+    \bibitem{nakashima17}
+    Y. Nakashima, K. Ichimura, M.S. Islam, M. Sakamoto, N. Ezumi, M. Hirata, M. Ichimura, R. Ikezoe, T. Imai, T. Kariya \textit{et al}.,:
+    \newblock Recent progress of divertor simulation research using the GAMMA 10/PDX tandem mirror,
+    \newblock {\em Nuclear\ Fusion},
+    57 (2017), 116033.
+
+    \bibitem{ezumi19}
+    N. Ezumi, T. Iijima, M. Sakamoto, Y. Nakashima, M. Hirata, M. Ichimura, R. Ikezoe, T. Imai, T. Kariya, I. Katanuma \textit{et al}.,:
+    \newblock Synergistic effect of nitrogen and hydrogen seeding gases on plasma detachment in the GAMMA 10/PDX tandem mirror,
+    \newblock {\em Nuclear\ Fusion}, 
+    59 (2019), 066030. 
+
+    \bibitem{togo22}
+    S. Togo, N. Ezumi, M. Sakamoto, T. Sugiyama, K. Takanashi, T. Takizuka, K. Ibano:
+    \newblock Fluid simulation of plasmas with anisotropic ion pressure in an inhomogeneous magnetic field of a tandem mirror device GAMMA 10/PDX,
+    \newblock {\em Journal\ of\ Advanced\ Simulation\ in\ Science\ and\ Engineering},
+    9 (2022), 185.
+
+    \bibitem{togo19}
+    S. Togo, T. Takizuka, D. Reiser, M. Sakamoto, N. Ezumi, Y. Ogawa, K. Nojiri, K. Ibano, Y. Li, Y. Nakashima:
+    \newblock Self-consistent simulation of supersonic plasma flows in advanced divertors,
+    \newblock {\em Nuclear\ Fusion}, 
+    59 (2019), 076041.
+
+    \bibitem{nakamura86}
+    Y. Nakamura, H. Nishihara:
+    \newblock An analysis of the ablation rate for solid pellets injected into neutral beam heated toroidal plasmas,
+    \newblock {\em Nuclear\ Fusion},
+    26 (1986), 907.
+
+    \bibitem{togo16}
+    S. Togo, T. Takizuka, M. Nakamura, K. Hoshino, K. Ibano, T. L. Lang, Y. Ogawa:
+    \newblock Self-consistent treatment of the sheath boundary conditions by introducing anisotropic ion temperatures and virtual divertor model,
+    \newblock {\em Journal\ of\ Computational\ Physics}, 
+    56 (2016), 729.
+
+    \bibitem{prinja92}
+    A. K. Prinja, C. Koesoemodiprodjo:
+    \newblock A first flight corrected neutral diffusion model for edge plasma simulation,
+    \newblock {\em Journal\ of\ Nuclear\ Materials}, 
+    196-198 (1992), 340.
+
+\end{thebibliography}
+\end{document}
